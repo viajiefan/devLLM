@@ -14,6 +14,6 @@ time git lfs pull --include "multilingual/c4-ja.*.json.gz"
 
 # (Option) split (job時間制限を考えて1file 5G以下に)
 # 行の途中で分割しない https://qiita.com/b-mente/items/0a57e65687d67b4ac582
-# N file(ここでは160)に分割する場合　出力ファイルベースファイル名+数字出力
-# split -n l/160 -d --additional-suffix=.jsonl c4-ja.jsonl c4-ja-
+# N file(ここでは160)に分割する場合　出力ファイルベースファイル名+数字出力(-d) suffixの文字数は3桁
+# split -n l/160 -d --additional-suffix=.jsonl -a 3 c4-ja.jsonl c4-ja-
 # -> c4-ja-00, ...
