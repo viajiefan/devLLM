@@ -17,7 +17,7 @@ def add_key_val(example, tgt_key, tgt_val):
     example[tgt_key] = tgt_val
     return example
 
-### Main
+### Main ##################################################################################################################################
 
 def dl_peS2o():
     ds_peS2o = load_dataset("allenai/peS2o")['train']  # textのみ
@@ -88,8 +88,15 @@ def dl_basicMath():
     print(_ds[0])
     _ds.to_json("/storage6/corpus/category/MATH/raw/basicMath/basicMath_10m_jsonl")
 
+def dl_conceptKG():
+    _ds = load_dataset('RJZ/ConceptNetSyntheticPhi3Text_ja')['train']
+    print(_ds[0])
+    print(f"len: {len(_ds)}")
+    _ds.to_json("/storage6/jiez/kg_synth/conceptnet_triples_phi3text_ja.jsonl")
 
-### SFT
+
+
+### SFT ##################################################################################################################################
 def dl_wikiQA_ja():
     def format_wikiQA(example):
         # JSQuAD format: https://techblog.yahoo.co.jp/entry/2022122030379907/
@@ -195,6 +202,20 @@ def convert_coTangent_ja():
             out.write(f"{enc}\n")
     print('output ./conv_CoTangent_ja.jsonl')
 
+def add_text_coTangent_ja():
+    cot_path = "/storage6/corpus/SFT/conv_CoTangent_ja.jsonl"
+    _ds = load_dataset("json", data_files=cot_path)['train']
+
+    def map_concatenated_text(example):
+        _txt = example['instruction']+'\n' if example['instruction'] != "" else ""
+        _txt += example['input']+'\n' if example['input'] != "" else ""
+        _txt += example['response'] if example['response'] != "" else ""
+        example['text'] = _txt
+        return example
+    _ds = _ds.map(map_concatenated_text)
+    _ds.to_json("/storage6/corpus/SFT/ja_sft_CoTangent_text.jsonl", force_ascii=False)    
+
+
 def dl_llmJapanese():
     # instruction, input, output -> (before_template) instruction, input, response
     _ds = load_dataset("izumi-lab/llm-japanese-dataset")['train']
@@ -204,6 +225,16 @@ def dl_llmJapanese():
     _ds = _ds.remove_columns(list(set(_ds.features) - set(['instruction','input', 'response'])))
     _ds.to_json("/storage6/corpus/SFT/llm_japanese.jsonl", force_ascii=False)
 
+def add_text_llmJapanese():
+    # `text`=instruction +\n+ input +\n+ response
+    llm_path = "/storage6/corpus/SFT/llm_japanese.jsonl"
+    _ds = load_dataset("json", data_files=llm_path)['train']
+
+    def map_concatenated_text(example):
+        example['text'] = f"{example['instruction']}\n{example['input']}\n{example['response']}"
+        return example
+    _ds = _ds.map(map_concatenated_text)
+    _ds.to_json("/storage6/corpus/SFT/sft_llm_japanese_text.jsonl", force_ascii=False)
 
 if __name__ == "__main__":
     #dl_peS2o()
