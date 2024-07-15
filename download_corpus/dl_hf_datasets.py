@@ -92,8 +92,27 @@ def dl_conceptKG():
     _ds = load_dataset('RJZ/ConceptNetSyntheticPhi3Text_ja')['train']
     print(_ds[0])
     print(f"len: {len(_ds)}")
-    _ds.to_json("/storage6/jiez/kg_synth/conceptnet_triples_phi3text_ja.jsonl")
+    _ds.to_json("/storage6/jiez/kg_synth/conceptnet_triples_phi3text_ja.jsonl", force_ascii=False)
 
+def convert_mathPile():
+    # {"question": {"body": xxx, }, "answers": [{"Body":yyy }, {"Body": zzz}]}
+    # -> +`text`: Question: question_body \n Answer 1: {answers[0] \n Answer 2: {answers[1] \n ...}}
+    in_path = "/storage5/shared/corpus/3rd_tonyu/kirei/mathpile/indiv/cs.stackexchange.com.jsonl"
+    _ds = load_dataset("json", data_files=in_path)['train']
+    # debug
+    #_ds = _ds.select(range(10))
+
+    def map_mathPile(example):
+        _txt = ""
+        _txt += f"Title: {example['question']['Title']}\n" if example['question'].get('Title', None) != None else ""
+        _txt += f"Question: {example['question']['Body']}\n" if example['question'].get('Body', None) != None else ""
+        a_list = [f"Answer {i+1}: {a['Body']}" for i, a in enumerate(example['answers'])]
+        a_txt = '\n'.join(a_list)
+        example['text'] = f"{_txt}\n{a_txt}"
+        return example
+
+    _ds = _ds.map(map_mathPile)
+    _ds.to_json("/storage6/corpus/en_conv_mathPile.jsonl", force_ascii=False)
 
 
 ### SFT ##################################################################################################################################
@@ -242,6 +261,7 @@ if __name__ == "__main__":
     #dl_metaMath()
     #dl_atlasMath()
     #dl_basicMath()
+    convert_mathPile()
 
     ### SFT
     dl_wikiQA_ja()
